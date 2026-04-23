@@ -1,0 +1,301 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.app { max-width: 480px; margin: 0 auto; padding: 1rem; min-height: 600px; }
+.screen { display: none; }
+.screen.active { display: block; }
+.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.5rem; }
+.card-title { font-size: 20px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 1.25rem; }
+.field-row { margin-bottom: 1rem; }
+.field-row label { display: block; font-size: 13px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.field-row input { width: 100%; padding: 8px 12px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); font-size: 14px; background: var(--color-background-primary); color: var(--color-text-primary); outline: none; }
+.field-row input:focus { border-color: #378ADD; box-shadow: 0 0 0 2px rgba(55,138,221,0.15); }
+.btn { padding: 9px 20px; border-radius: var(--border-radius-md); font-size: 14px; font-weight: 500; cursor: pointer; border: none; }
+.btn-primary { background: #185FA5; color: #fff; width: 100%; }
+.btn-primary:hover { background: #0C447C; }
+.btn-secondary { background: transparent; border: 0.5px solid var(--color-border-secondary); color: var(--color-text-primary); }
+.btn-secondary:hover { background: var(--color-background-secondary); }
+.btn-info { background: #185FA5; color: #fff; padding: 6px 16px; font-size: 13px; }
+.btn-info:hover { background: #0C447C; }
+.header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+.link-btn { background: none; border: none; color: #185FA5; font-size: 13px; cursor: pointer; padding: 0; text-decoration: underline; }
+.data-row { display: flex; gap: 8px; padding: 10px 0; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 14px; }
+.data-row:last-child { border-bottom: none; }
+.data-label { color: var(--color-text-secondary); width: 120px; flex-shrink: 0; }
+.data-value { color: var(--color-text-primary); font-weight: 500; }
+.status-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; margin-top: 6px; }
+.status-sangat-kurus { background: #FCEBEB; color: #A32D2D; }
+.status-kurus { background: #FAEEDA; color: #854F0B; }
+.status-normal { background: #EAF3DE; color: #3B6D11; }
+.status-gemuk { background: #FAEEDA; color: #854F0B; }
+.status-obesitas { background: #FCEBEB; color: #A32D2D; }
+
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: center; justify-content: center; }
+.overlay.show { display: flex; }
+.popup { background: var(--color-background-primary); border-radius: var(--border-radius-lg); padding: 1.5rem; max-width: 320px; width: 90%; text-align: center; }
+.popup h3 { font-size: 17px; font-weight: 500; margin-bottom: 8px; }
+.popup p { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 1.25rem; }
+
+.list-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.list-row:last-child { border-bottom: none; }
+.list-phone { font-size: 14px; color: var(--color-text-primary); }
+.list-name { font-size: 12px; color: var(--color-text-secondary); }
+
+.imt-formula { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px; font-size: 12px; color: var(--color-text-secondary); margin-top: 1rem; line-height: 1.8; }
+.imt-formula strong { color: var(--color-text-primary); font-weight: 500; }
+.back-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; color: var(--color-text-secondary); font-size: 13px; margin-bottom: 1rem; padding: 0; }
+.back-btn:hover { color: var(--color-text-primary); }
+.empty-state { text-align: center; padding: 2rem; color: var(--color-text-secondary); font-size: 14px; }
+.imt-score { font-size: 28px; font-weight: 500; color: var(--color-text-primary); }
+</style>
+
+<div class="app">
+  <div id="screen-main" class="screen active">
+    <div class="card">
+      <div class="header-row">
+        <div class="card-title" style="margin-bottom:0">Cek IMT Anda</div>
+        <button class="link-btn" onclick="showScreen('screen-list')">Lihat data lain</button>
+      </div>
+      <div class="field-row">
+        <label>Nomor HP</label>
+        <input type="text" id="inp-phone" placeholder="contoh: 08123456789" />
+      </div>
+      <div class="field-row">
+        <label>Nama</label>
+        <input type="text" id="inp-name" placeholder="Nama lengkap" />
+      </div>
+      <div class="field-row">
+        <label>Tinggi Badan (cm)</label>
+        <input type="number" id="inp-height" placeholder="contoh: 170" />
+      </div>
+      <div class="field-row">
+        <label>Berat Badan (kg)</label>
+        <input type="number" id="inp-weight" placeholder="contoh: 65" />
+      </div>
+      <div id="main-error" style="color:#A32D2D;font-size:13px;margin-bottom:8px;display:none"></div>
+      <button class="btn btn-primary" onclick="handleHitung()">Hitung</button>
+    </div>
+  </div>
+
+  <div id="screen-list" class="screen">
+    <button class="back-btn" onclick="showScreen('screen-main')">&#8592; Kembali</button>
+    <div class="card">
+      <div class="card-title">IMT List</div>
+      <div style="display:flex;justify-content:space-between;padding-bottom:8px;border-bottom:0.5px solid var(--color-border-secondary);">
+        <span style="font-size:12px;color:var(--color-text-secondary);font-weight:500">Nomor HP</span>
+        <span style="font-size:12px;color:var(--color-text-secondary);font-weight:500">Action</span>
+      </div>
+      <div id="list-content"></div>
+    </div>
+  </div>
+
+  <div id="screen-detail" class="screen">
+    <button class="back-btn" onclick="showScreen('screen-list')">&#8592; Kembali</button>
+    <div class="card">
+      <div id="detail-title" class="card-title"></div>
+      <div id="detail-content"></div>
+      <div style="margin-top:1rem">
+        <button class="btn btn-info" onclick="handleEdit()">Edit</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-edit" class="screen">
+    <button class="back-btn" onclick="showScreen('screen-detail')">&#8592; Kembali</button>
+    <div class="card">
+      <div id="edit-title" class="card-title"></div>
+      <div class="field-row">
+        <label>Nomor HP</label>
+        <input type="text" id="edit-phone" readonly style="background:var(--color-background-secondary);color:var(--color-text-secondary)" />
+      </div>
+      <div class="field-row">
+        <label>Nama</label>
+        <input type="text" id="edit-name" />
+      </div>
+      <div class="field-row">
+        <label>Tinggi Badan (cm)</label>
+        <input type="number" id="edit-height" />
+      </div>
+      <div class="field-row">
+        <label>Berat Badan (kg)</label>
+        <input type="number" id="edit-weight" />
+      </div>
+      <button class="btn btn-primary" onclick="handleEditHitung()">Hitung</button>
+    </div>
+  </div>
+
+  <div id="screen-result" class="screen">
+    <button class="back-btn" id="result-back-btn" onclick="showScreen('screen-main')">&#8592; Kembali</button>
+    <div class="card">
+      <div id="result-title" class="card-title"></div>
+      <div id="result-content"></div>
+      <div class="imt-formula">
+        <strong>IMT = Berat (kg) : [Tinggi Badan(m) x Tinggi Badan(m)]</strong><br>
+        IMT &lt; 17 = Sangat Kurus<br>
+        IMT -17 s.d &lt;18,5 = Kurus<br>
+        IMT 18,5 s.d 25 = Normal<br>
+        IMT 25 s.d 27 = Gemuk<br>
+        IMT &gt; 27 = Obesitas
+      </div>
+      <button class="btn btn-secondary" style="margin-top:1rem;width:100%" onclick="showScreen('screen-main')">Kembali ke Form</button>
+    </div>
+  </div>
+</div>
+
+<div id="popup-overlay" class="overlay">
+  <div class="popup">
+    <h3>Nomor HP sudah terdaftar!</h3>
+    <p>Klik lihat untuk melihat dan mengubah data Anda.</p>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="btn btn-secondary" onclick="closePopup()">Tutup</button>
+      <button class="btn btn-info" onclick="handleLihatFromPopup()">Lihat</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let db = JSON.parse(localStorage.getItem('imt_db') || '[]');
+let currentPhone = '';
+let editingPhone = '';
+let resultFromEdit = false;
+
+function saveDb() {
+  localStorage.setItem('imt_db', JSON.stringify(db));
+}
+
+function calcIMT(weight, height) {
+  const hm = height / 100;
+  return weight / (hm * hm);
+}
+
+function getStatus(imt) {
+  if (imt < 17) return { label: 'Sangat Kurus', cls: 'sangat-kurus' };
+  if (imt < 18.5) return { label: 'Kurus', cls: 'kurus' };
+  if (imt <= 25) return { label: 'Normal', cls: 'normal' };
+  if (imt <= 27) return { label: 'Gemuk', cls: 'gemuk' };
+  return { label: 'Obesitas', cls: 'obesitas' };
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'screen-list') renderList();
+}
+
+function closePopup() {
+  document.getElementById('popup-overlay').classList.remove('show');
+}
+
+function handleHitung() {
+  const phone = document.getElementById('inp-phone').value.trim();
+  const name = document.getElementById('inp-name').value.trim();
+  const height = parseFloat(document.getElementById('inp-height').value);
+  const weight = parseFloat(document.getElementById('inp-weight').value);
+  const err = document.getElementById('main-error');
+
+  if (!phone || !name || !height || !weight) {
+    err.textContent = 'Semua field harus diisi.';
+    err.style.display = 'block';
+    return;
+  }
+  err.style.display = 'none';
+
+  const exists = db.find(r => r.phone === phone);
+  if (exists) {
+    currentPhone = phone;
+    document.getElementById('popup-overlay').classList.add('show');
+  } else {
+    const record = { phone, name, height, weight };
+    db.push(record);
+    saveDb();
+    showResult(record, false);
+  }
+}
+
+function handleLihatFromPopup() {
+  closePopup();
+  showDetail(currentPhone);
+  showScreen('screen-detail');
+}
+
+function showDetail(phone) {
+  const rec = db.find(r => r.phone === phone);
+  if (!rec) return;
+  editingPhone = phone;
+  const imt = calcIMT(rec.weight, rec.height);
+  const status = getStatus(imt);
+  document.getElementById('detail-title').textContent = 'Data IMT ' + rec.phone;
+  document.getElementById('detail-content').innerHTML = `
+    <div class="data-row"><span class="data-label">Nomor HP</span><span class="data-value">: ${rec.phone}</span></div>
+    <div class="data-row"><span class="data-label">Nama</span><span class="data-value">: ${rec.name}</span></div>
+    <div class="data-row"><span class="data-label">Tinggi Badan</span><span class="data-value">: ${rec.height}</span></div>
+    <div class="data-row"><span class="data-label">Berat Badan</span><span class="data-value">: ${rec.weight}</span></div>
+    <div class="data-row"><span class="data-label">Status</span><span class="data-value"><span class="status-badge status-${status.cls}">${status.label}</span></span></div>
+  `;
+}
+
+function handleEdit() {
+  const rec = db.find(r => r.phone === editingPhone);
+  if (!rec) return;
+  document.getElementById('edit-title').textContent = 'Edit Perhitungan IMT ' + rec.phone;
+  document.getElementById('edit-phone').value = rec.phone;
+  document.getElementById('edit-name').value = rec.name;
+  document.getElementById('edit-height').value = rec.height;
+  document.getElementById('edit-weight').value = rec.weight;
+  showScreen('screen-edit');
+}
+
+function handleEditHitung() {
+  const phone = document.getElementById('edit-phone').value;
+  const name = document.getElementById('edit-name').value.trim();
+  const height = parseFloat(document.getElementById('edit-height').value);
+  const weight = parseFloat(document.getElementById('edit-weight').value);
+  if (!name || !height || !weight) return;
+  const idx = db.findIndex(r => r.phone === phone);
+  if (idx > -1) {
+    db[idx] = { phone, name, height, weight };
+    saveDb();
+  }
+  resultFromEdit = true;
+  showResult({ phone, name, height, weight }, true);
+}
+
+function showResult(rec, fromEdit) {
+  const imt = calcIMT(rec.weight, rec.height);
+  const status = getStatus(imt);
+  document.getElementById('result-title').textContent = 'Hasil Perhitungan IMT ' + rec.phone;
+  document.getElementById('result-content').innerHTML = `
+    <div class="data-row"><span class="data-label">Nomor HP</span><span class="data-value">: ${rec.phone}</span></div>
+    <div class="data-row"><span class="data-label">Nama</span><span class="data-value">: ${rec.name}</span></div>
+    <div class="data-row"><span class="data-label">Tinggi Badan</span><span class="data-value">: ${rec.height} cm</span></div>
+    <div class="data-row"><span class="data-label">Berat Badan</span><span class="data-value">: ${rec.weight} kg</span></div>
+    <div class="data-row"><span class="data-label">Skor IMT</span><span class="data-value"><span class="imt-score">${imt.toFixed(2)}</span></span></div>
+    <div class="data-row"><span class="data-label">Kesimpulan</span><span class="data-value"><span class="status-badge status-${status.cls}">${status.label}</span></span></div>
+  `;
+  showScreen('screen-result');
+}
+
+function renderList() {
+  const el = document.getElementById('list-content');
+  if (db.length === 0) {
+    el.innerHTML = '<div class="empty-state">Belum ada data IMT.</div>';
+    return;
+  }
+  el.innerHTML = db.map(rec => `
+    <div class="list-row">
+      <div>
+        <div class="list-phone">${rec.phone}</div>
+        <div class="list-name">${rec.name}</div>
+      </div>
+      <button class="btn btn-info" onclick="viewFromList('${rec.phone}')">Lihat</button>
+    </div>
+  `).join('');
+}
+
+function viewFromList(phone) {
+  editingPhone = phone;
+  showDetail(phone);
+  showScreen('screen-detail');
+}
+</script>
